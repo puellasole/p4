@@ -1,61 +1,75 @@
-﻿#include <iostream>
-#include <fstream>
-#include <string>
+#include <iostream>
 #include <vector>
-#include <Windows.h>
+#include <cassert>
 
+enum Device_ID { Electricity_ID = 0, DiscreteSignals_ID, Heater_ID };
 
-bool CheckWord(std::string path, std::string word)
+// Иерархия классов приборов
+class Device
 {
-    std::ifstream myfile(path);
-    std::string line;
-    std::string search = word;
-    bool found = false;
-    while (std::getline(myfile, line) && !found)
+public:
+    virtual void info() = 0;
+    virtual ~Device() {}
+    // Параметризированный статический фабричный метод
+    static Device* createDevice(Device_ID id);
+};
+
+class Electricity : public Device
+{
+public:
+    void info() {
+        std::cout << "Electricity" << std::endl;
+    }
+};
+
+class DiscreteSignals : public Device
+{
+public:
+    void info() {
+        std::cout << "DiscreteSignals" << std::endl;
+    }
+};
+
+class Heater : public Device
+{
+public:
+    void info() {
+        std::cout << "Heater" << std::endl;
+    }
+};
+
+
+// Реализация параметризированного фабричного метода
+Device* Device::createDevice(Device_ID id)
+{
+    Device* p = nullptr;
+    switch (id)
     {
-        if (line.find(search) != std::string::npos)
-        {
-            std::cout << word << std::endl;
-            found = true;
-            break;
-        }
+    case Electricity_ID:
+        p = new Electricity();
+        break;
+    case DiscreteSignals_ID:
+        p = new DiscreteSignals();
+        break;
+    case Heater_ID:
+        p = new Heater();
+        break;
+    default:
+        assert(false);
     }
-    //if (!found)
-        //std::cout << "NOT FOUND\n";
-    return 0;
-}
+    return p;
+};
 
 
-void poll(std::vector<std::string> Electricity, std::vector<std::string> DiscreteSignals, std::vector<std::string> Heating, std::string filename) {
-
-    for (int i = 0; i < Electricity.size(); i++) {
-        if (CheckWord(filename, Electricity[i]) != 0) {
-            std::cout << Electricity[i] << std::endl;
-        }
-    }
-    for (int i = 0; i < DiscreteSignals.size(); i++) {
-        if (CheckWord(filename, DiscreteSignals[i]) != 0) {
-            std::cout << DiscreteSignals[i] << std::endl;
-        }
-    }
-    for (int i = 0; i < Heating.size(); i++) {
-        if (CheckWord(filename, Heating[i]) != 0) {
-            std::cout << Heating[i] << std::endl;
-        }
-    }
-    //не реализуем считывание данных со счетчиков
-}
-
+// Создание объектов при помощи параметризированного фабричного метода
 int main()
 {
-    setlocale(LC_ALL, "Russian");
-    //SetConsoleCP(1251);
-    //SetConsoleOutputCP(1251);
-    SetConsoleCP(CP_UTF8);
-    SetConsoleOutputCP(CP_UTF8);
-    std::vector<std::string> Electricity = { "Меркурий 230", "Нева МТ314", "Энергомера CE308" };
-    std::vector<std::string> DiscreteSignals = { "Reallab NL-16HV", "Приборэлектро PRE-16", "Энергосервис ЭНМВ-1-24" };
-    std::vector<std::string> Heating = { "Ouman S203", "Овен ТРМ232" };
-    poll(Electricity, DiscreteSignals, Heating, "NewFile.txt");
-    return 0;
+    std::vector<Device*> v;
+    v.push_back(Device::createDevice(Electricity_ID));
+    v.push_back(Device::createDevice(DiscreteSignals_ID));
+    v.push_back(Device::createDevice(Heater_ID));
+
+    for (int i = 0; i < v.size(); i++)
+        v[i]->info();
+    // ...
 }
